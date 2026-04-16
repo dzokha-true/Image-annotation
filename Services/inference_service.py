@@ -19,7 +19,7 @@ class InferenceService(BaseService):
         
         logger.info(f"InferenceService processing image {image_id} at {image_path}")
         
-        # Call fake AI Model
+        # Call AI Mock
         prediction = self.ai_model.predict(image_path)
         
         # Publish result

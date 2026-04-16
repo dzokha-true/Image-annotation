@@ -1,7 +1,6 @@
 from .base_service import BaseService
 import logging
 import uuid
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

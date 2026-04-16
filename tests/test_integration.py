@@ -15,15 +15,15 @@ async def test_end_to_end_pipeline():
     db_repo = DocumentRepository()
     embedder = Embedder()
     
-    inference_svc = InferenceService(broker, ai_model)
-    db_svc = DocumentDBService(broker, db_repo)
-    embedding_svc = EmbeddingService(broker, embedder)
+    inferenceServ = InferenceService(broker, ai_model)
+    dbServ = DocumentDBService(broker, db_repo)
+    EmbedServ = EmbeddingService(broker, embedder)
     cli = CLI(broker)
     
     await asyncio.gather(
-        inference_svc.start(),
-        db_svc.start(),
-        embedding_svc.start()
+        inferenceServ.start(),
+        dbServ.start(),
+        EmbedServ.start()
     )
     
     # Track final output

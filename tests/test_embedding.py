@@ -9,8 +9,8 @@ async def test_embedding_redis():
     broker = MockBroker()
     embedder = Embedder()
     
-    svc = EmbeddingService(broker, embedder)
-    await svc.start()
+    embedderServ = EmbeddingService(broker, embedder)
+    await embedderServ.start()
     
     published_events = []
     async def capture_event(message):
@@ -18,7 +18,7 @@ async def test_embedding_redis():
         
     await broker.subscribe("embedding.created", capture_event)
     
-    await svc.handle_annotation_stored({
+    await embedderServ.handle_annotation_stored({
         "type": "annotation_stored",
         "topic": "annotation.stored",
         "event_id": "test-123",

@@ -4,9 +4,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 class DocumentDBService(BaseService):
-    def __init__(self, broker, db_repo):
+    def __init__(self, broker, db_conn):
         super().__init__(broker)
-        self.db_repo = db_repo
+        self.db_conn = db_conn
 
     async def start(self):
         await self.subscribe("inference.completed", self.handle_inference_completed)
@@ -25,7 +25,7 @@ class DocumentDBService(BaseService):
         }
         
         # Checking for idempotency
-        saved = self.db_repo.save(document) # Returns false if already saved
+        saved = self.db_conn.save(document) # Returns false if already saved
         if not saved:
             logger.info(f"DocumentDBService ignoring duplicate event for image_id={image_id}")
             return

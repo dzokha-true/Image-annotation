@@ -9,8 +9,8 @@ async def test_inference_redis():
     broker = MockBroker()
     ai_model = AIModel()
     
-    svc = InferenceService(broker, ai_model)
-    await svc.start()
+    InferenceServ = InferenceService(broker, ai_model)
+    await InferenceServ.start()
     
     # We will subscribe to what it should publish
     published_events = []
@@ -19,7 +19,7 @@ async def test_inference_redis():
         
     await broker.subscribe("inference.completed", capture_event)
     
-    await svc.handle_image_submitted({
+    await InferenceServ.handle_image_submitted({
         "type": "image_submitted",
         "topic": "image.submitted",
         "event_id": "test-123",

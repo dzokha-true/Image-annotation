@@ -5,7 +5,7 @@ from Services.broker import RedisBroker
 from Services.inference_service import InferenceService
 from Services.document_db import DocumentDBService
 from Services.embedding import EmbeddingService
-from Services.cli import CLIEmulator
+from Services.cli import CLI
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,8 +23,7 @@ async def main():
     inference_svc = InferenceService(broker, ai_model)
     db_svc = DocumentDBService(broker, db_repo)
     embedding_svc = EmbeddingService(broker, embedder)
-    cli = CLIEmulator(broker)
-    cli = CLIEmulator(broker)
+    cli = CLI(broker)
 
     # Start all services concurrently
     tasks = [

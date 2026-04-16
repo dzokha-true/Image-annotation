@@ -36,10 +36,12 @@ class RedisBroker(BaseBroker):
         if message and message['type'] == 'message':
             # Get topic and data from message
             topic = message['channel'].decode('utf-8')
+
             if topic in self.handlers:
                 data = json.loads(message['data'].decode('utf-8'))
                 for handler in self.handlers[topic]:
-                    asyncio.create_task(handler(data)) # create a task for each handler with the data that has arrived
+                    # create a task for each handler with the data that has arrived
+                    asyncio.create_task(handler(data))
 
     async def start_listening(self):
         if self.pubsub is None:
