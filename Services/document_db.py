@@ -15,6 +15,7 @@ class DocumentDBService(BaseService):
     async def handle_inference_completed(self, message: dict):
         payload = message.get("payload", {})
         image_id = payload.get("image_id")
+        event_id = message.get("event_id")
         
         logger.info(f"DocumentDBService saving annotations for image {image_id}")
         
@@ -33,6 +34,7 @@ class DocumentDBService(BaseService):
         out_event = {
             "type": "annotation_stored",
             "topic": "annotation.stored",
+            "event_id": event_id,
             "payload": {
                 "image_id": image_id,
                 "document": document

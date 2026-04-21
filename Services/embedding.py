@@ -16,6 +16,7 @@ class EmbeddingService(BaseService):
         payload = message.get("payload", {})
         image_id = payload.get("image_id")
         document = payload.get("document", {})
+        event_id = message.get("event_id")
         
         logger.info(f"EmbeddingService generating embedding for image {image_id}")
         
@@ -25,6 +26,7 @@ class EmbeddingService(BaseService):
         out_event = {
             "type": "embedding_created",
             "topic": "embedding.created",
+            "event_id": event_id,
             "payload": {
                 "image_id": image_id,
                 "embedding": embedding

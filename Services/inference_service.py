@@ -16,6 +16,7 @@ class InferenceService(BaseService):
         payload = message.get("payload", {})
         image_path = payload.get("image_path")
         image_id = payload.get("image_id")
+        event_id = message.get("event_id")
         
         logger.info(f"InferenceService processing image {image_id} at {image_path}")
         
@@ -26,6 +27,7 @@ class InferenceService(BaseService):
         out_event = {
             "type": "inference_completed",
             "topic": "inference.completed",
+            "event_id": event_id,
             "payload": {
                 "image_id": image_id,
                 "image_path": image_path,
