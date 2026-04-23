@@ -16,13 +16,19 @@ class DocumentDBService(BaseService):
         payload = message.get("payload", {})
         image_id = payload.get("image_id")
         event_id = message.get("event_id")
+        image_path = payload.get("image_path")
+        prediction = payload.get("prediction")
         
+        if not image_id or not image_path or prediction is None:
+            logger.error(f"DocumentDBService missing required fields. image_id={image_id}, image_path={image_path}, prediction={prediction}")
+            return
+            
         logger.info(f"DocumentDBService saving annotations for image {image_id}")
         
         document = {
             "image_id": image_id,
-            "image_path": payload.get("image_path"),
-            "prediction": payload.get("prediction")
+            "image_path": image_path,
+            "prediction": prediction
         }
         
         # Checking for idempotency

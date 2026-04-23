@@ -20,8 +20,13 @@ class EmbeddingService(BaseService):
         
         logger.info(f"EmbeddingService generating embedding for image {image_id}")
         
+        image_path = document.get("image_path")
+        if not image_path:
+            logger.error(f"EmbeddingService: No image_path found for image {image_id}")
+            return
+            
         # Call embedder
-        embedding = self.embedder.generate(document)
+        embedding = self.embedder.generate(image_path)
         
         out_event = {
             "type": "embedding_created",
@@ -29,7 +34,8 @@ class EmbeddingService(BaseService):
             "event_id": event_id,
             "payload": {
                 "image_id": image_id,
-                "embedding": embedding
+                "embedding": embedding,
+                "document": document
             }
         }
         await self.publish(out_event)

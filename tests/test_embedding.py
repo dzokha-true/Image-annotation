@@ -26,6 +26,7 @@ async def test_embedding_redis():
             "image_id": "img1",
             "document": {
                 "image_id": "img1",
+                "image_path": "/tmp/img1.png",
                 "prediction": {"boxes": [10, 20]}
             }
         }

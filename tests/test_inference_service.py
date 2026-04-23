@@ -4,10 +4,13 @@ from Services.broker import MockBroker
 from Services.inference_service import InferenceService
 from deps import AIModel
 
+from unittest.mock import MagicMock
+
 @pytest.mark.asyncio
 async def test_inference_redis():
     broker = MockBroker()
     ai_model = AIModel()
+    ai_model.predict = MagicMock(return_value={"predictions": [{"label": "cat", "confidence": 0.99, "boxes": [10, 20, 30, 40]}]})
     
     InferenceServ = InferenceService(broker, ai_model)
     await InferenceServ.start()
@@ -38,4 +41,5 @@ async def test_inference_redis():
     assert event["type"] == "inference_completed"
     assert event["payload"]["image_id"] == "img1"
     assert "prediction" in event["payload"]
-    assert event["payload"]["prediction"]["boxes"] == [10, 20, 30, 40]
+    assert "predictions" in event["payload"]["prediction"]
+    assert event["payload"]["prediction"]["predictions"][0]["boxes"] == [10, 20, 30, 40]

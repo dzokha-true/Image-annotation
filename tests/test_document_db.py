@@ -42,3 +42,45 @@ async def idemtopency_test():
     
     # We shouldn't receive a second annotation.stored event
     assert len(published_events) == 1
+
+@pytest.mark.asyncio
+async def test_document_db_missing_fields():
+    broker = MockBroker()
+    db_repo = DocumentRepository()
+    db_conn = DocumentDBService(broker, db_repo)
+    await db_conn.start()
+    
+    events = []
+    async def capture(m):
+        events.append(m)
+    await broker.subscribe("annotation.stored", capture)
+    
+    # Missing image_id
+    incoming_msg = {
+        "type": "inference_completed",
+        "topic": "inference.completed",
+        "event_id": "123",
+        "payload": {
+            "image_path": "/path.png",
+            "prediction": {}
+        }
+    }
+    
+    await db_conn.handle_inference_completed(incoming_msg)
+    await asyncio.sleep(0.01)
+    
+    # Missing prediction
+    incoming_msg_2 = {
+        "type": "inference_completed",
+        "topic": "inference.completed",
+        "event_id": "123",
+        "payload": {
+            "image_id": "img1",
+            "image_path": "/path.png"
+        }
+    }
+    
+    await db_conn.handle_inference_completed(incoming_msg_2)
+    await asyncio.sleep(0.01)
+    
+    assert len(events) == 0  # Should abort early on both
