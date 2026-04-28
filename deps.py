@@ -1,6 +1,12 @@
 import logging
-logger = logging.getLogger(__name__)
+import warnings
+import os
 
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.modules.module")
+
+logger = logging.getLogger(__name__)
 class AIModel:
     def __init__(self):
         try:
@@ -86,6 +92,69 @@ class VectorRepository:
         self.saved_vectors[image_id] = embedding
         return True
 
+class Embedder:
+    def generate(self, image_path: str) -> list:
+        """Mock embedding generation."""
+        return [0.1, 0.2, 0.3, 0.4]
+
+class FAISSVectorRepository:
+    def __init__(self, dimension=512):
+        try:
+            import faiss
+            self.dimension = dimension
+            self.index = faiss.IndexFlatL2(dimension)
+            self.id_to_image_id = {}
+            self.image_id_to_id = {}
+            self.current_id = 0
+            self.faiss_available = True
+            logger.info("Initialized FAISS index for vector storage.")
+        except ImportError:
+            logger.warning("faiss-cpu not installed, FAISSVectorRepository will fallback to dictionary mock.")
+            self.faiss_available = False
+            self.saved_vectors = {}
+
+    def save(self, image_id: str, embedding: list) -> bool:
+        """Save embedding to FAISS."""
+        if not self.faiss_available:
+            if image_id in self.saved_vectors:
+                return False
+            self.saved_vectors[image_id] = embedding
+            return True
+            
+        import numpy as np
+        if image_id in self.image_id_to_id:
+            return False # already saved
+            
+        # Convert embedding to numpy array
+        vector = np.array([embedding], dtype=np.float32)
+        
+        # Add to FAISS index
+        self.index.add(vector)
+        
+        # Keep track of IDs
+        self.id_to_image_id[self.current_id] = image_id
+        self.image_id_to_id[image_id] = self.current_id
+        self.current_id += 1
+        
+        return True
+
+    def search(self, query_embedding: list, top_k: int = 3) -> list:
+        """Search the FAISS index for the most similar embeddings."""
+        if not self.faiss_available or self.index.ntotal == 0:
+            return []
+            
+        import numpy as np
+        vector = np.array([query_embedding], dtype=np.float32)
+        distances, indices = self.index.search(vector, top_k)
+        
+        results = []
+        for i, idx in enumerate(indices[0]):
+            if idx != -1 and idx in self.id_to_image_id:
+                results.append({
+                    "image_id": self.id_to_image_id[idx],
+                    "distance": float(distances[0][i])
+                })
+        return results
 
 class CLIPEmbedder:
     def __init__(self):
@@ -130,3 +199,19 @@ class CLIPEmbedder:
             logger.error(f"Failed to generate CLIP embedding for {image_path}: {e}")
             return []
 
+    def generate_text(self, text: str) -> list:
+        """Generate embedding for text queries using OpenAI CLIP."""
+        if not self.model or not self.processor:
+            return [0.1, 0.2, 0.3, 0.4] # Fallback mock
+
+        try:
+            import torch
+            inputs = self.processor(text=text, return_tensors="pt", padding=True).to(self.device)
+            
+            with torch.no_grad():
+                outputs = self.model.get_text_features(**inputs)
+                
+            return outputs.cpu().squeeze().tolist()
+        except Exception as e:
+            logger.error(f"Failed to generate text embedding for '{text}': {e}")
+            return []
