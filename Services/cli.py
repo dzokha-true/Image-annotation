@@ -7,10 +7,12 @@ import readline
 logger = logging.getLogger(__name__)
 
 class CLI(BaseService):
-    def __init__(self, broker):
+    def __init__(self, broker, embedder=None, vector_repo=None):
         super().__init__(broker)
         self.completed_images = {}
         self.unnotified_count = 0
+        self.embedder = embedder
+        self.vector_repo = vector_repo
         
     async def start(self):
         await self.subscribe("embedding.stored", self.handle_embedding_stored)
@@ -65,6 +67,7 @@ class CLI(BaseService):
             if command.lower() == 'help':
                 print("Available commands:")
                 print("  upload <path> : Submit an image to the pipeline.")
+                print("  search <query>: Semantic search using natural language (e.g. 'a cat').")
                 print("  status        : Check how many images have been fully processed.")
                 print("  help          : Show this help message.")
                 print("  exit          : Shut down the CLI.")
@@ -79,6 +82,32 @@ class CLI(BaseService):
                     print(f"Upload requested for {path}.")
                 else:
                     print("Please provide a path: upload <path>")
+            elif command.lower().startswith("search "):
+                parts = command.split(" ", 1)
+                if len(parts) > 1:
+                    query = parts[1].strip()
+                    if not self.embedder or not self.vector_repo:
+                        print("Search is not available. Missing embedder or vector DB.")
+                    else:
+                        print(f"Searching for '{query}'...")
+                        # Run the synchronous inference and search in a separate thread
+                        text_embedding = await asyncio.to_thread(self.embedder.generate_text, query)
+                        if not text_embedding:
+                            print("Failed to generate embedding for the query.")
+                        else:
+                            results = await asyncio.to_thread(self.vector_repo.search, text_embedding, 3)
+                            if not results:
+                                print("No matches found.")
+                            else:
+                                print(f"\nTop matches for '{query}':")
+                                for res in results:
+                                    img_id = res['image_id']
+                                    dist = res['distance']
+                                    print(f"- Image ID: {img_id} (Distance: {dist:.4f})")
+                                    if img_id in self.completed_images:
+                                        print(f"  Annotations: {self.completed_images[img_id]}")
+                else:
+                    print("Please provide a query: search <query>")
             elif command.lower() == 'status':
                 if not self.completed_images:
                     print("No images have completed the pipeline yet.")

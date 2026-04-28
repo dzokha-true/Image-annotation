@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 from dotenv import load_dotenv
-from deps import AIModel, DocumentRepository, CLIPEmbedder, VectorRepository
+from deps import AIModel, DocumentRepository, CLIPEmbedder, FAISSVectorRepository
 from Services.broker import RedisBroker
 from Services.inference_service import InferenceService
 from Services.document_db import DocumentDBService
@@ -25,7 +25,7 @@ async def main():
     ai_model = AIModel()
     db_repo = DocumentRepository()
     embedder = CLIPEmbedder()
-    vector_repo = VectorRepository()
+    vector_repo = FAISSVectorRepository(dimension=512)
     
     # Setup broker
     # In a real setup, requires Redis running locally on default port
@@ -38,7 +38,7 @@ async def main():
     embedding_svc = EmbeddingService(broker, embedder)
     uploader_svc = UploaderService(broker)
     vector_db_svc = VectorDBService(broker, vector_repo)
-    cli = CLI(broker)
+    cli = CLI(broker, embedder, vector_repo)
 
     # Start services (which subscribes them to topics)
     await inference_svc.start()
