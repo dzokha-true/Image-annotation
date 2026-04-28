@@ -2,6 +2,7 @@ from .base_service import BaseService
 import logging
 import uuid
 import asyncio
+import readline
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ class CLI(BaseService):
             elif command.lower().startswith("upload "):
                 parts = command.split(" ", 1)
                 if len(parts) > 1:
-                    path = parts[1]
+                    path = parts[1].strip("'\" ")
                     await self.trigger_image_submission(path)
                     print(f"Upload requested for {path}.")
                 else:

@@ -40,15 +40,16 @@ async def main():
     vector_db_svc = VectorDBService(broker, vector_repo)
     cli = CLI(broker)
 
-    # Start all services concurrently in the background
-    tasks = [
-        asyncio.create_task(inference_svc.start()),
-        asyncio.create_task(db_svc.start()),
-        asyncio.create_task(embedding_svc.start()),
-        asyncio.create_task(uploader_svc.start()),
-        asyncio.create_task(vector_db_svc.start()),
-        asyncio.create_task(cli.start())
-    ]
+    # Start services (which subscribes them to topics)
+    await inference_svc.start()
+    await db_svc.start()
+    await embedding_svc.start()
+    await uploader_svc.start()
+    await vector_db_svc.start()
+    await cli.start()
+
+    # Start the broker listening loop in the background
+    asyncio.create_task(broker.start_listening())
     
     print("Services started.")
     

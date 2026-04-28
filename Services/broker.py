@@ -30,20 +30,28 @@ class RedisBroker(BaseBroker):
             self.handlers[topic] = []
         self.handlers[topic].append(handler)
 
-        await self.pubsub.subscribe(**{topic: self._message_handler})
+        await self.pubsub.subscribe(topic)
         
     async def _message_handler(self, message):
         if message and message['type'] == 'message':
             # Get topic and data from message
-            topic = message['channel'].decode('utf-8')
+            topic = message['channel'].decode('utf-8') if isinstance(message['channel'], bytes) else message['channel']
 
             if topic in self.handlers:
-                data = json.loads(message['data'].decode('utf-8'))
-                for handler in self.handlers[topic]:
-                    # create a task for each handler with the data that has arrived
-                    asyncio.create_task(handler(data))
+                try:
+                    data = message['data'].decode('utf-8') if isinstance(message['data'], bytes) else message['data']
+                    parsed_data = json.loads(data)
+                    for handler in self.handlers[topic]:
+                        # create a task for each handler with the data that has arrived
+                        asyncio.create_task(handler(parsed_data))
+                except Exception as e:
+                    logger.error(f"Error handling message for topic {topic}: {e}")
 
     async def start_listening(self):
+        if getattr(self, '_listening', False):
+            return
+        self._listening = True
+        
         if self.pubsub is None:
             logger.warning("Pubsub not initialized. Call subscribe first.")
             return

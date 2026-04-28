@@ -20,5 +20,4 @@ class BaseService:
             raise
             
     async def start(self):
-        if hasattr(self.broker, 'start_listening'):
-            await self.broker.start_listening()
+        pass
